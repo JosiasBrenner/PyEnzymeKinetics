@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from matplotlib import pyplot as plt
 from numpy import ndarray
 import numpy as np
 from typing import Optional
@@ -12,11 +13,12 @@ class EnzymeKinetics:
     init_substrate: Optional[list] = None
 
     def __post_init__(self):
+        # TODO consisgtency check shape of input data
+
         self._is_substrate = self.check_is_substrate()
         self._multiple_concentrations = self._check_multiple_concentrations()
         if self.substrate is None:
             self.substrate = self.calculate_substrate()
-        self.time = self._adujust_time()
         
 
 
@@ -44,12 +46,12 @@ class EnzymeKinetics:
         """If substrate data is not provided substrate data is calculated, assuming conservation of mass"""
 
         if self.substrate is None and self.product is not None:
+            substrate = np.zeros(self.product.shape)
             if not self._multiple_concentrations:
                 substrate = np.array([self.init_substrate - product for product in self.product])
             else:
-                for i in range(self.product.shape[0]):
-                    substrate = np.zeros(self.product.shape)
-                    substrate[i] = [self.init_substrate[i] - product for product in self.product[i]]
+                for i, row in enumerate(self.product):
+                    substrate[i] = [self.init_substrate[i] - product for product in row]
                     #TODO: catch error if no init_substrate is provided
             
             return substrate
@@ -57,11 +59,7 @@ class EnzymeKinetics:
         else:
             raise Exception("Data must be provided eighter for substrate or product")
 
-    def _adujust_time(self):
-        return np.tile(self.time, self.substrate.shape)
-
 
 if __name__ == "__main__":
-    concentration_data = np.fromfile("data/concentration")
-    time_data = np.fromfile("data/time")
-    ekm = EnzymeKinetics(time_data, product=concentration_data)
+    import matplotlib.pyplot as plt
+    from pyenzymekinetics.helper.load_utitlity import ek
