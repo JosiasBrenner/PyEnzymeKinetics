@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from matplotlib import pyplot as plt
-from numpy import ndarray
-import numpy as np
+from numpy import ndarray, array, zeros
+
 from typing import Optional
 
 @dataclass
@@ -46,9 +46,9 @@ class EnzymeKinetics:
         """If substrate data is not provided substrate data is calculated, assuming conservation of mass"""
 
         if self.substrate is None and self.product is not None:
-            substrate = np.zeros(self.product.shape)
+            substrate = zeros(self.product.shape)
             if not self._multiple_concentrations:
-                substrate = np.array([self.init_substrate - product for product in self.product])
+                substrate = array([self.init_substrate - product for product in self.product])
             else:
                 for i, row in enumerate(self.product):
                     substrate[i] = [self.init_substrate[i] - product for product in row]
@@ -62,4 +62,5 @@ class EnzymeKinetics:
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    from pyenzymekinetics.helper.load_utitlity import ek
+    from pyenzymekinetics.parameterestimator.helper.load_utitlity import ek
+    print(ek)
