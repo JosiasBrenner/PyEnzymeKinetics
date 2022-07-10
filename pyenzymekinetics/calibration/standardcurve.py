@@ -1,10 +1,9 @@
 from logging.handlers import QueueHandler
 from pyenzymekinetics.calibration.calibrationmodel import CalibrationModel, linear1, quadratic, poly3, poly_e, rational
 
-from typing import Optional, Dict
-from dataclasses import dataclass
+from typing import Dict
 
-from lmfit import minimize, Parameters, Parameter, report_fit, Model
+
 from scipy.optimize import curve_fit
 from numpy import ndarray, linspace
 
@@ -18,6 +17,7 @@ class StandardCurve():
                  substance_name=""):
         self.concentration = concentration
         self.absorption = absorption
+        self.substance_name = substance_name
         self.concentration_unit = concentration_unit
         self.models = self.initialize_models()
         self.models_fitted = self.fit_models()
@@ -37,7 +37,7 @@ class StandardCurve():
         )
 
         poly3_model = CalibrationModel(
-            name="3rd degree polynominal",
+            name="3rd polynominal",
             equation=poly3,
             parameters={"a": 0.0, "b": 0.0, "c": 0.0}
         )
@@ -104,8 +104,9 @@ class StandardCurve():
         equation = self.models[model].equation
         params = self.models[model].result.params.valuesdict()
 
-        plt.plot(smooth_x, equation(smooth_x, **params))
         plt.scatter(self.concentration, self.absorption)
+        plt.plot(smooth_x, equation(smooth_x, **params))
+
         plt.ylabel("absorption")
         plt.xlabel(f"concentration {self.concentration_unit}")
         # TODO: add name of compound to title
@@ -120,7 +121,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from pyenzymekinetics.parameterestimator.helper.load_utitlity import calibration_conc, calibration_abso
     print(float(calibration_conc[5]))
-    obj = StandardCurve(calibration_abso, calibration_conc,
+    obj = StandardCurve(concentration=calibration_conc, absorption=calibration_abso,
                         concentration_unit="mM")
     # print(obj.absorption[4])
     obj.visualize_fit()
