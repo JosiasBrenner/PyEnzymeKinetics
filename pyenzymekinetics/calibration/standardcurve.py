@@ -1,56 +1,57 @@
 from logging.handlers import QueueHandler
 from pyenzymekinetics.calibration.calibrationmodel import CalibrationModel, linear1, quadratic, poly3, poly_e, rational
 
-from typing import Optional
+from typing import Optional, Dict
 from dataclasses import dataclass
 
 from lmfit import minimize, Parameters, Parameter, report_fit, Model
 from scipy.optimize import curve_fit
-from numpy import ndarray
+from numpy import ndarray, linspace
 
 
-
-
-@dataclass
 class StandardCurve():
-    concentration: ndarray
-    absorption: ndarray
-    models: Optional[dict] = None
-
-    def __post_init__(self):
+    # TODO docstring
+    def __init__(self,
+                 concentration: ndarray,
+                 absorption: ndarray,
+                 concentration_unit="",
+                 substance_name=""):
+        self.concentration = concentration
+        self.absorption = absorption
+        self.concentration_unit = concentration_unit
         self.models = self.initialize_models()
-        self.fit_models()
+        self.models_fitted = self.fit_models()
+        self.result_dict = self.evaluate_aic()
 
-
-    def initialize_models(self) -> list:
+    def initialize_models(self) -> Dict[str, CalibrationModel]:
         linear_model = CalibrationModel(
-            name = "Linear",
-            equation = linear1,
-            parameters = {"a":0}
+            name="Linear",
+            equation=linear1,
+            parameters={"a": 0.0}
         )
 
         quadratic_model = CalibrationModel(
-            name = "Quadratic",
-            equation = quadratic,
-            parameters = {"a":0, "b":0}
+            name="Quadratic",
+            equation=quadratic,
+            parameters={"a": 0.0, "b": 0.0}
         )
 
         poly3_model = CalibrationModel(
-            name = "3rd degree polynominal",
-            equation = poly3,
-            parameters = {"a":0, "b":0, "c":0}
+            name="3rd degree polynominal",
+            equation=poly3,
+            parameters={"a": 0.0, "b": 0.0, "c": 0.0}
         )
 
         polye_model = CalibrationModel(
-            name = "Exponential polynominal",
-            equation = poly_e,
-            parameters = {"a":0, "b":0}
+            name="Exponential",
+            equation=poly_e,
+            parameters={"a": 0.0, "b": 0.0}
         )
 
         rational_model = CalibrationModel(
-            name = "Rational",
-            equation = rational,
-            parameters = {"a":0, "b":0}
+            name="Rational",
+            equation=rational,
+            parameters={"a": 0.0, "b": 0.0}
         )
 
         models = {linear_model.name: linear_model,
@@ -64,18 +65,63 @@ class StandardCurve():
 
     def fit_models(self):
         for model in self.models.values():
-            for parameter in model.parameters.values():
-                model.parameters = curve_fit(f=model.equation, xdata=self.concentration, ydata=self.absorption)[0]
-            model.lmfit_params = CalibrationModel.set_lmfit_parameters(model)
 
+            # Get parameter estimates
+            result = curve_fit(
+                f=model.equation, xdata=self.concentration, ydata=self.absorption)[0]
+            model.parameters = dict(zip(model.parameters.keys(), result))
 
+            # Initialize LmFit Parameter object
+            model.lmfit_params = CalibrationModel.set_lmfit_parameters(
+                model)
+
+            # Fit data to models
+            model.result = model.lmfit_model.fit(
+                data=self.absorption, x=self.concentration, params=model.lmfit_params)
+
+    def evaluate_aic(self):
+        names = []
+        aic = []
+        for model in self.models.values():
+            names.append(model.name)
+            aic.append(model.result.aic)
+
+        result_dict = dict(zip(names, aic))
+        result_dict = {k: v for k, v in sorted(
+            result_dict.items(), key=lambda item: item[1], reverse=False)}
+        return result_dict
+
+    def visualize_fit(self, model=""):
+        # TODO: add file directory for save
+        best_model = next(iter(self.result_dict))
+        if len(model) == 0:
+            model = best_model
+
+        print(model)
+        smooth_x = linspace(
+            self.concentration[0], self.concentration[-1], len(self.concentration)*2)
+
+        equation = self.models[model].equation
+        params = self.models[model].result.params.valuesdict()
+
+        plt.plot(smooth_x, equation(smooth_x, **params))
+        plt.scatter(self.concentration, self.absorption)
+        plt.ylabel("absorption")
+        plt.xlabel(f"concentration {self.concentration_unit}")
+        # TODO: add name of compound to title
+        plt.title("calibration curve")
+        plt.show()
+
+        #plt.plot(smooth_x, self.models[model].equation(sm))
+        # plt.show()
 
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from pyenzymekinetics.parameterestimator.helper.load_utitlity import calibration_conc, calibration_abso
-    print(calibration_abso)
-    print(calibration_conc)
-    obj = StandardCurve(calibration_abso, calibration_conc)
+    print(float(calibration_conc[5]))
+    obj = StandardCurve(calibration_abso, calibration_conc,
+                        concentration_unit="mM")
+    # print(obj.absorption[4])
+    obj.visualize_fit()
     print("hi")
-    
