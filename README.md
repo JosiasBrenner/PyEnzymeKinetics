@@ -1,17 +1,24 @@
-# Project Title
+# PyEnzymeKinetics
 
-Simple overview of use/purpose.
+Software-package for easy enzyme kinetic parameter estimation.
+Supports EnzymeML format (not yet)
+Allows comprehensive data analysis from experimental raw data to kinetic parameters
 
-## Description
+## Calibration
 
-An in-depth paragraph about your project and overview of use.
+- linear and non-linear calibration for calculating concentrations from analytic signal (spectroscopy / HPLC)
+- Selection of best fit model based on akaike-criterion
 
-## Getting Started
+## Michaelis Menten kinetics
+
+- Fitting of enzyme assay data Michaelis Menten equations for:
+  - irreversible MM
+  - enzyme inactivation
+  - inhibition
 
 ### Dependencies
 
-- Describe any prerequisites, libraries, OS version, etc., needed before installing program.
-- ex. Windows 10
+- standard stuff
 
 ### Installing
 
@@ -24,7 +31,7 @@ An in-depth paragraph about your project and overview of use.
 - Step-by-step bullets
 
 ```
-code blocks for commands
+import this
 ```
 
 ## Help
@@ -39,16 +46,9 @@ command to run if program contains helper info
 
 Contributors names and contact info
 
-ex. Dominique Pizzie  
-ex. [@DomPizzie](https://twitter.com/dompizzie)
+Max Haeussler
+max.haeussler@t-online.de
 
-## Version History
-
-- 0.2
-  - Various bug fixes and optimizations
-  - See [commit change]() or See [release history]()
-- 0.1
-  - Initial Release
 
 ## License
 
@@ -56,10 +56,4 @@ This project is licensed under the [NAME HERE] License - see the LICENSE.md file
 
 ## Acknowledgments
 
-Inspiration, code snippets, etc.
-
-- [awesome-readme](https://github.com/matiassingers/awesome-readme)
-- [PurpleBooth](https://gist.github.com/PurpleBooth/109311bb0361f32d87a2)
-- [dbader](https://github.com/dbader/readme-template)
-- [zenorocha](https://gist.github.com/zenorocha/4526327)
-- [fvcproductions](https://gist.github.com/fvcproductions/1bfc2d4aecb01a834b46)
+ex
