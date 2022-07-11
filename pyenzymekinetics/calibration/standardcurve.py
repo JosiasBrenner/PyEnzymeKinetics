@@ -1,7 +1,7 @@
 from logging.handlers import QueueHandler
 from pyenzymekinetics.calibration.calibrationmodel import CalibrationModel, linear1, quadratic, poly3, poly_e, rational
 
-from typing import Dict
+from typing import Dict, Callable
 
 
 from scipy.optimize import curve_fit
@@ -13,13 +13,13 @@ class StandardCurve():
     def __init__(self,
                  concentration: ndarray,
                  absorption: ndarray,
-                 concentration_unit="",
-                 substance_name=""):
+                 concentration_unit: str = None,
+                 substance_name: str = None):
         self.concentration = concentration
         self.absorption = absorption
         self.substance_name = substance_name
         self.concentration_unit = concentration_unit
-        self.models = self.initialize_models()
+        self.models: Dict[str, CalibrationModel] = self.initialize_models()
         self.models_fitted = self.fit_models()
         self.result_dict = self.evaluate_aic()
 
@@ -54,12 +54,13 @@ class StandardCurve():
             parameters={"a": 0.0, "b": 0.0}
         )
 
-        models = {linear_model.name: linear_model,
-                  quadratic_model.name: quadratic_model,
-                  poly3_model.name: poly3_model,
-                  polye_model.name: polye_model,
-                  rational_model.name: rational_model
-                  }
+        models: Dict[str, CalibrationModel] = {
+            linear_model.name: linear_model,
+            quadratic_model.name: quadratic_model,
+            poly3_model.name: poly3_model,
+            polye_model.name: polye_model,
+            rational_model.name: rational_model
+        }
 
         return models
 
@@ -91,10 +92,10 @@ class StandardCurve():
             result_dict.items(), key=lambda item: item[1], reverse=False)}
         return result_dict
 
-    def visualize_fit(self, model=""):
+    def visualize_fit(self, model: str = None):
         # TODO: add file directory for save
         best_model = next(iter(self.result_dict))
-        if len(model) == 0:
+        if model is None:
             model = best_model
 
         print(model)
@@ -108,7 +109,7 @@ class StandardCurve():
         plt.plot(smooth_x, equation(smooth_x, **params))
 
         plt.ylabel("absorption")
-        plt.xlabel(f"concentration {self.concentration_unit}")
+        plt.xlabel(f"concentration [{self.concentration_unit}]")
         # TODO: add name of compound to title
         plt.title("calibration curve")
         plt.show()
@@ -120,7 +121,6 @@ class StandardCurve():
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from pyenzymekinetics.parameterestimator.helper.load_utitlity import calibration_conc, calibration_abso
-    print(float(calibration_conc[5]))
     obj = StandardCurve(concentration=calibration_conc, absorption=calibration_abso,
                         concentration_unit="mM")
     obj.visualize_fit()
