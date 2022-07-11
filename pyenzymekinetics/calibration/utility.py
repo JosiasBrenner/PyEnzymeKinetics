@@ -1,7 +1,7 @@
 from pyenzymekinetics.calibration.standardcurve import StandardCurve
 
 from typing import Dict, Callable
-from numpy import ndarray, zeros, exp
+from numpy import ndarray, zeros, exp, max, sum
 from scipy.optimize import fsolve
 
 
@@ -55,7 +55,7 @@ def to_concentration(standard_curve: StandardCurve, data: ndarray, standard_curv
     Returns:
         ndarray: Calculated concentrations
     """
-    
+
     result = zeros(data.shape)
 
     best_model = next(iter(standard_curve.result_dict))
@@ -73,12 +73,19 @@ def to_concentration(standard_curve: StandardCurve, data: ndarray, standard_curv
             params["absorption"] = data[measurement, value]
             result[measurement, value] = fsolve(equation, 0, params)
 
+    # Check calibration bounds: 
+    if max(data) > max(standard_curve.absorption):
+        calibration_bound = max(standard_curve.absorption)
+        count = (data > calibration_bound).sum()
+        print(f"ExtrapoltaionWarning!\n{count} entries in data are greater than upper calibration bound of {calibration_bound}!")
+
     return result
+
 
 if __name__ == "__main__":
     from pyenzymekinetics.parameterestimator.helper.load_utitlity import absorbance_measured, calibration_abso, calibration_conc
     print(absorbance_measured.shape)
     calibration = StandardCurve(calibration_conc, calibration_abso, "mM")
 
-    print(to_concentration(calibration, absorbance_measured))
+    result = to_concentration(calibration, absorbance_measured)
     
