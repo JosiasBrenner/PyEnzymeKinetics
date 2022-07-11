@@ -123,6 +123,4 @@ if __name__ == "__main__":
     print(float(calibration_conc[5]))
     obj = StandardCurve(concentration=calibration_conc, absorption=calibration_abso,
                         concentration_unit="mM")
-    # print(obj.absorption[4])
     obj.visualize_fit()
-    print("hi")

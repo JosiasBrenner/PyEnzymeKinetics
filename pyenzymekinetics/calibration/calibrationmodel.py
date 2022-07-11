@@ -21,6 +21,8 @@ class CalibrationModel():
 
 
 # Model equations
+# If change here, change also in utility.py
+
 def linear1(x, a) -> float:
     return a*x
 
