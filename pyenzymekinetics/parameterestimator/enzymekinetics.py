@@ -7,6 +7,7 @@ from typing import Optional
 
 @dataclass
 class EnzymeKinetics:
+    # TODO: get rid of dataclass
     time: list
     substrate: Optional[list] = None
     product: Optional[list] = None
