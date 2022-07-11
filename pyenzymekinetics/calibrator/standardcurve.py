@@ -1,5 +1,5 @@
 from logging.handlers import QueueHandler
-from pyenzymekinetics.calibration.calibrationmodel import CalibrationModel, linear1, quadratic, poly3, poly_e, rational
+from pyenzymekinetics.calibrator.calibrationmodel import CalibrationModel, linear1, quadratic, poly3, poly_e, rational
 
 from typing import Dict, Callable
 

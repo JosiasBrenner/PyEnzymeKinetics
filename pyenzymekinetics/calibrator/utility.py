@@ -1,4 +1,4 @@
-from pyenzymekinetics.calibration.standardcurve import StandardCurve
+from pyenzymekinetics.calibrator.standardcurve import StandardCurve
 
 from typing import Dict, Callable
 from numpy import ndarray, zeros, exp, max, sum
