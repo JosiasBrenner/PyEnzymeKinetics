@@ -77,7 +77,7 @@ def to_concentration(standard_curve: StandardCurve, data: ndarray, standard_curv
     if max(data) > max(standard_curve.absorption):
         calibration_bound = max(standard_curve.absorption)
         count = (data > calibration_bound).sum()
-        print(f"ExtrapoltaionWarning!\n{count} entries in data are greater than upper calibration bound of {calibration_bound}!")
+        print(f"ExtrapolationWarning!\n{count} entries in data are greater than upper calibration bound of {calibration_bound}!")
 
     return result
 
