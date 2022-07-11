@@ -55,7 +55,8 @@ def to_concentration(standard_curve: StandardCurve, data: ndarray, standard_curv
     Returns:
         ndarray: Calculated concentrations
     """
-
+    shape = data.shape
+    data = data.flatten()
     result = zeros(data.shape)
 
     best_model = next(iter(standard_curve.result_dict))
@@ -67,11 +68,10 @@ def to_concentration(standard_curve: StandardCurve, data: ndarray, standard_curv
     equation: Callable = equation_dict[standard_curve.models[model].name]
     params: dict = standard_curve.models[model].result.params.valuesdict()
 
-    measurments, values = data.shape
-    for measurement in range(measurments):
-        for value in range(values):
-            params["absorption"] = data[measurement, value]
-            result[measurement, value] = fsolve(equation, 0, params)
+    for value in range(len(data)):
+        params["absorption"] = data[value]
+        result[value] = fsolve(equation, 0, params)
+    result = result.reshape(shape)
 
     # Check calibration bounds: 
     if max(data) > max(standard_curve.absorption):
@@ -88,4 +88,5 @@ if __name__ == "__main__":
     calibration = StandardCurve(calibration_conc, calibration_abso, "mM")
 
     result = to_concentration(calibration, absorbance_measured)
+    print(result)
     
