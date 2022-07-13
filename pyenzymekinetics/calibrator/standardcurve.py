@@ -6,6 +6,7 @@ from typing import Dict, Callable
 
 from scipy.optimize import curve_fit
 from numpy import ndarray, linspace
+import matplotlib.pyplot as plt
 
 
 class StandardCurve():
