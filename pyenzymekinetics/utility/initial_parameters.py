@@ -46,20 +46,20 @@ def get_v(substrate_conc, time):
     return v
 
 
-def get_initial_vmax(self):
-    v = self._get_v()
+def get_initial_vmax(substrate_conc, time):
+    v = get_v(substrate_conc, time)
     return max(v)
 
 
-def get_initial_Km(self):
+def get_initial_Km(substrate_conc, time):
 
-    v = self._get_v()
+    v = get_v(substrate_conc, time)
     idx_max = where(v == max(v))[0][0]
     idx_Km = (abs(v[idx_max:]-max(v)/2)).argmin()
 
-    if len(self.substrate_conc.shape) > 1:
-        km = mean(self.substrate_conc, axis=0)[idx_max+idx_Km]
+    if len(substrate_conc.shape) > 1:
+        km = mean(substrate_conc, axis=0)[idx_max+idx_Km]
     else:
-        km = self.substrate_conc[idx_max+idx_Km]
+        km = substrate_conc[idx_max+idx_Km]
 
     return km

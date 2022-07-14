@@ -1,7 +1,12 @@
-from pyenzymekinetics.utility.initial_parameters import get_v, get_initial_vmax, get_initial_K
+from opcode import haslocal
+from pyenzymekinetics.utility.initial_parameters import get_v, get_initial_vmax, get_initial_Km
+from pyenzymekinetics.parameterestimator.models import KineticModel, menten_irreversible, menten_irreversible_enzyme_inact
 
+from typing import Dict
 from matplotlib import pyplot as plt
 from numpy import ndarray, array, zeros, max
+from scipy.integrate import odeint
+from lmfit import minimize, report_fit
 
 
 class EnzymeKinetics():
@@ -21,12 +26,15 @@ class EnzymeKinetics():
         self.init_substrate = init_substrate
         self.inhibitor = inhibitor
 
-        self._is_substrate = self.check_is_substrate()
+        self._is_substrate = self._check_is_substrate()
         self._multiple_concentrations = self._check_multiple_concentrations()
         if self.substrate is None:
             self.substrate = self.calculate_substrate()
+        self._w0 = self._get_w0()
 
-    def check_is_substrate(self) -> bool:
+        self.models: Dict[str, KineticModel] = self.initialize_models()
+
+    def _check_is_substrate(self) -> bool:
         if self.substrate is not None:
             _is_substrate = True
         else:
@@ -62,6 +70,71 @@ class EnzymeKinetics():
             raise Exception(
                 "Data must be provided eighter for substrate or product")
 
+    def _get_w0(self):
+        return (self.init_substrate, self.enzyme)
+
+    def _get_kcat(self) -> float:
+        return get_initial_vmax(self.substrate, self.time) / self.enzyme
+
+    def initialize_models(self) -> Dict[str, KineticModel]:
+        irreversible_MM = KineticModel(
+            name="irreversible Michaelis Menten",
+            params=(""),
+            kcat_initial=self._get_kcat(),
+            Km_initial=get_initial_Km(self.substrate, self.time),
+            model=menten_irreversible
+        )
+
+        irrev_MM_enz_inact = KineticModel(
+            name="irreversible Michaelis Menten with enzyme inactivation",
+            params="ki",
+            kcat_initial=self._get_kcat(),
+            Km_initial=get_initial_Km(self.substrate, self.time),
+            model=menten_irreversible_enzyme_inact
+        )
+
+        kinetic_model_dict: Dict[str, KineticModel] = {
+            irreversible_MM.name: irreversible_MM,
+            irrev_MM_enz_inact.name: irrev_MM_enz_inact
+        }
+
+        return kinetic_model_dict
+
+    def fit_models(self):
+        for model in self.models.values():
+
+            def g(t, w0, params):
+                '''
+                Solution to the ODE w'(t)=f(t,w,p) with initial condition w(0)= w0 (= [S0])
+                '''
+                w = odeint(model.model, w0, t, args=(params,))
+                return w
+
+            def residual(params, t, data):
+
+                # get dimensions of data (here we fit against 4 measurments => ndata = 4)
+                ndata, nt = data.shape
+                resid = 0.0 * data[:]  # initialize the residual vector
+
+                # compute residual per data set
+                for i in range(ndata):
+
+                    cS, cE = self._w0
+                    w0 = (cS[i], cE)
+
+                    model = g(t, w0, params)  # solve the ODE with sfb.
+
+                    # get modeled product
+                    model = model[:, 0]
+
+                    # compute distance to measured data
+                    resid[i, :] = data[i, :]-model
+
+                return resid.flatten()
+
+            model.result = minimize(residual, model.parameters, args=(
+                self.time, self.substrate), method='leastsq', nan_policy='omit')
+
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
@@ -78,6 +151,8 @@ if __name__ == "__main__":
 
     kinetics = EnzymeKinetics(
         time, enzyme=0.8, product=conc, init_substrate=init_substrate)
+    kinetics.fit_models()
+    for model in kinetics.models.values():
+        report_fit(model.result)
 
-    print(kinetics._get_initial_vmax())
     print("hi")
