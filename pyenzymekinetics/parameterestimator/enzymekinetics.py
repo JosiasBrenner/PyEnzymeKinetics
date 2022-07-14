@@ -1,21 +1,25 @@
-from dataclasses import dataclass
+from pyenzymekinetics.utility.initial_parameters import get_v, get_initial_vmax, get_initial_K
+
 from matplotlib import pyplot as plt
-from numpy import ndarray, array, zeros
-
-from typing import Optional
+from numpy import ndarray, array, zeros, max
 
 
-@dataclass
-class EnzymeKinetics:
-    # TODO: get rid of dataclass
-    time: list
-    substrate: Optional[list] = None
-    product: Optional[list] = None
-    inhibitor: Optional[list] = None
-    init_substrate: Optional[list] = None
+class EnzymeKinetics():
 
-    def __post_init__(self):
-        # TODO consisgtency check shape of input data
+    def __init__(self,
+                 time: ndarray,
+                 enzyme: ndarray,
+                 substrate: ndarray = None,
+                 product: ndarray = None,
+                 init_substrate: ndarray or float = None,
+                 inhibitor: ndarray = None
+                 ):
+        self.time = time
+        self.enzyme = enzyme
+        self.substrate = substrate
+        self.product = product
+        self.init_substrate = init_substrate
+        self.inhibitor = inhibitor
 
         self._is_substrate = self.check_is_substrate()
         self._multiple_concentrations = self._check_multiple_concentrations()
@@ -61,5 +65,19 @@ class EnzymeKinetics:
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    from pyenzymekinetics.parameterestimator.helper.load_utitlity import ek
-    print(ek)
+    from pyenzymekinetics.parameterestimator.helper.load_utitlity import *
+    from pyenzymekinetics.calibrator.standardcurve import StandardCurve
+    from pyenzymekinetics.calibrator.utility import to_concentration
+
+    # Calibrate
+    standardcurve = StandardCurve(calibration_conc, calibration_abso)
+    # standardcurve.visualize_fit()
+
+    # Convert concentration in absorbance data
+    conc = to_concentration(standardcurve, absorbance_measured)
+
+    kinetics = EnzymeKinetics(
+        time, enzyme=0.8, product=conc, init_substrate=init_substrate)
+
+    print(kinetics._get_initial_vmax())
+    print("hi")
