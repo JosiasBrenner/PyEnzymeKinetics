@@ -2,47 +2,46 @@ from pyenzyme import EnzymeMLDocument
 import numpy as np
 
 
-def get_v(self):
-    v_all = 0.0*self.substrate_conc[:]  # initialize velocity vector
-    if len(self.substrate_conc.shape) > 1:
-        for i in range(self.substrate_conc.shape[0]):
+def get_v(substrate_conc, time):
+    v_all = 0.0*substrate_conc[:]  # initialize velocity vector
+    if len(substrate_conc.shape) > 1:
+        for i in range(substrate_conc.shape[0]):
 
-            prev_value = self.substrate_conc[i, 0]
+            prev_value = substrate_conc[i, 0]
             prev_time = 0.0
 
-            for j in range(self.substrate_conc.shape[1]):
+            for j in range(substrate_conc.shape[1]):
 
-                if self.time[j] == 0:
-                    delta = prev_value - self.substrate_conc[i, j]
+                if time[j] == 0:
+                    delta = prev_value - substrate_conc[i, j]
                 else:
                     delta = abs(
-                        (prev_value - self.substrate_conc[i, j])/(self.time[j]-prev_time))
+                        (prev_value - substrate_conc[i, j])/(time[j]-prev_time))
 
                 v_all[i, j] = delta
-                prev_value = self.substrate_conc[i, j]
-                prev_time = self.time[j]
+                prev_value = substrate_conc[i, j]
+                prev_time = time[j]
 
         v = np.max(v_all, axis=0)
 
     else:
 
-        prev_value = self.substrate_conc[0]
+        prev_value = substrate_conc[0]
         prev_time = 0.0
 
-        for j in range(self.substrate_conc.shape[0]):
+        for j in range(substrate_conc.shape[0]):
 
-            if self.time[j] == 0:
-                delta = prev_value - self.substrate_conc[j]
+            if time[j] == 0:
+                delta = prev_value - substrate_conc[j]
             else:
                 delta = abs(
-                    (prev_value - self.substrate_conc[j])/(self.time[j]-prev_time))
+                    (prev_value - substrate_conc[j])/(time[j]-prev_time))
 
             v_all[j] = delta
-            prev_value = self.substrate_conc[j]
-            prev_time = self.time[j]
+            prev_value = substrate_conc[j]
+            prev_time = time[j]
 
         v = v_all
-        print("done")
 
     return v
 
