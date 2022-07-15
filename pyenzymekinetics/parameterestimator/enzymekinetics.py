@@ -1,6 +1,6 @@
 from opcode import haslocal
 from pyenzymekinetics.utility.initial_parameters import get_v, get_initial_vmax, get_initial_Km
-from pyenzymekinetics.parameterestimator.models import KineticModel, menten_irreversible, menten_irreversible_enzyme_inact
+from pyenzymekinetics.parameterestimator.models import KineticModel, menten_irreversible, menten_irreversible_enzyme_inact, menten_irreversible_inhibition
 
 from typing import Dict
 from matplotlib import pyplot as plt
@@ -80,6 +80,7 @@ class EnzymeKinetics():
         irreversible_MM = KineticModel(
             name="irreversible Michaelis Menten",
             params=(""),
+            w0={"cS": self.init_substrate, "cE": self.enzyme, "cP": self.product},
             kcat_initial=self._get_kcat(),
             Km_initial=get_initial_Km(self.substrate, self.time),
             model=menten_irreversible
@@ -88,26 +89,49 @@ class EnzymeKinetics():
         irrev_MM_enz_inact = KineticModel(
             name="irreversible Michaelis Menten with enzyme inactivation",
             params="ki",
+            w0={"cS": self.init_substrate, "cE": self.enzyme, "cP": self.product},
             kcat_initial=self._get_kcat(),
             Km_initial=get_initial_Km(self.substrate, self.time),
             model=menten_irreversible_enzyme_inact
         )
 
+        irrev_MM_prod_inhib = KineticModel(
+            name="irreversible Michaelis Menten with competitive inhibition",
+            params="kpi",
+            w0={"cS": self.init_substrate, "cE": self.enzyme,
+                "cP": self.product, "cI": self.inhibitor},
+            kcat_initial=self._get_kcat(),
+            Km_initial=get_initial_Km(self.substrate, self.time),
+            model=menten_irreversible_inhibition
+        )
+
+        irrev_MM_prod_inhib_enz_inact = KineticModel(
+            name="irreversible Michaelis Menten with competitive inhibition and enzyme inactivation",
+            params=["kpi", "ki"],
+            w0={"cS": self.init_substrate, "cE": self.enzyme,
+                "cP": self.product, "cI": self.inhibitor},
+            kcat_initial=self._get_kcat(),
+            Km_initial=get_initial_Km(self.substrate, self.time),
+            model=menten_irreversible_inhibition
+        )
+
         kinetic_model_dict: Dict[str, KineticModel] = {
             irreversible_MM.name: irreversible_MM,
-            irrev_MM_enz_inact.name: irrev_MM_enz_inact
+            irrev_MM_enz_inact.name: irrev_MM_enz_inact,
+            irrev_MM_prod_inhib.name: irrev_MM_prod_inhib,
+            irrev_MM_prod_inhib_enz_inact.name: irrev_MM_prod_inhib_enz_inact
         }
 
         return kinetic_model_dict
 
     def fit_models(self):
-        for model in self.models.values():
+        for kineticmodel in self.models.values():
 
             def g(t, w0, params):
                 '''
                 Solution to the ODE w'(t)=f(t,w,p) with initial condition w(0)= w0 (= [S0])
                 '''
-                w = odeint(model.model, w0, t, args=(params,))
+                w = odeint(kineticmodel.model, w0, t, args=(params,))
                 return w
 
             def residual(params, t, data):
@@ -119,8 +143,13 @@ class EnzymeKinetics():
                 # compute residual per data set
                 for i in range(ndata):
 
-                    cS, cE = self._w0
-                    w0 = (cS[i], cE)
+                    if len(kineticmodel.w0.keys()) == 3:
+                        cS, cE, cP = kineticmodel.w0.values()
+                        # TODO: fix initia product concentration
+                        w0 = (cS[i], cE, 0)
+                    else:
+                        cS, cE, cP, cI = kineticmodel.w0.values()
+                        w0 = w0 = (cS[i], cE, 0, cI)
 
                     model = g(t, w0, params)  # solve the ODE with sfb.
 
@@ -132,8 +161,25 @@ class EnzymeKinetics():
 
                 return resid.flatten()
 
-            model.result = minimize(residual, model.parameters, args=(
+            kineticmodel.result = minimize(residual, kineticmodel.parameters, args=(
                 self.time, self.substrate), method='leastsq', nan_policy='omit')
+
+    def visualize(self, save_to_path="", format="svg"):
+        for model in self.models.values():
+            for i in range(self.substrate.shape[0]):
+                ax = plt.scatter(x=self.time, y=self.substrate[i])
+
+                # Integrate model
+                s0 = self.init_conc[i]
+                p0 = self.substrate_conc[i, 0]
+                e0 = self.enzyme_conc
+
+                #print(f"P: {p0}, E: {e0}, s:{s0}")
+
+                w0 = (p0, e0, s0)
+
+                data_fitted = self.g(self.time, w0, self.result.params)
+                ax = plt.plot(self.time, data_fitted[:, 0], '-', linewidth=1)
 
 
 if __name__ == "__main__":
