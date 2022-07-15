@@ -1,5 +1,5 @@
 import numpy as np
-from pyenzymekinetics.parameterestimator import EnzymeKinetics
+#from pyenzymekinetics.parameterestimator import EnzymeKinetics
 
 absorbance_measured = np.fromfile("data/concentration")
 absorbance_measured = np.reshape(absorbance_measured, (7, 21))
