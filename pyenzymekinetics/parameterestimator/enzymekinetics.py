@@ -1,5 +1,5 @@
 from opcode import haslocal
-from pyenzymekinetics.utility.initial_parameters import get_v, get_initial_vmax, get_initial_Km
+from pyenzymekinetics.utility.initial_parameters import get_initial_vmax, get_initial_Km
 from pyenzymekinetics.parameterestimator.models import KineticModel, menten_irreversible, menten_irreversible_enzyme_inact, menten_irreversible_inhibition
 
 from typing import Dict
