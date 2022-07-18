@@ -1,7 +1,7 @@
 from pyenzymekinetics.calibrator.standardcurve import StandardCurve
 
 from typing import Dict, Callable
-from numpy import ndarray, zeros, exp, max, sum
+from numpy import ndarray, zeros, exp, max, sum, where
 from scipy.optimize import fsolve
 
 
@@ -40,7 +40,7 @@ equation_dict: Dict[str, Callable] = {
     "Rational": root_rational
     }
 
-def to_concentration(standard_curve: StandardCurve, data: ndarray, standard_curve_model="") -> ndarray:
+def to_concentration(standard_curve: StandardCurve, data: ndarray, standard_curve_model="", allow_extrapolation:bool = False) -> ndarray:
     """Converts absobrance / peak area into concentration based on StandardCurve.
 
     Args:
@@ -55,6 +55,12 @@ def to_concentration(standard_curve: StandardCurve, data: ndarray, standard_curv
     Returns:
         ndarray: Calculated concentrations
     """
+    if allow_extrapolation == False:
+        pos = min(where(data > max(standard_curve.absorption))[1])
+        data = data[:,:pos]
+        
+
+
     shape = data.shape
     data = data.flatten()
     result = zeros(data.shape)
@@ -84,9 +90,8 @@ def to_concentration(standard_curve: StandardCurve, data: ndarray, standard_curv
 
 if __name__ == "__main__":
     from pyenzymekinetics.parameterestimator.helper.load_utitlity import absorbance_measured, calibration_abso, calibration_conc
-    print(absorbance_measured.shape)
     calibration = StandardCurve(calibration_conc, calibration_abso, "mM")
 
     result = to_concentration(calibration, absorbance_measured)
-    print(result)
+    print(result.shape)
     
