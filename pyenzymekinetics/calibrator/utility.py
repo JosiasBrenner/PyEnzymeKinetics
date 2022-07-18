@@ -55,9 +55,10 @@ def to_concentration(standard_curve: StandardCurve, data: ndarray, standard_curv
     Returns:
         ndarray: Calculated concentrations
     """
-    if allow_extrapolation == False:
-        pos = min(where(data > max(standard_curve.absorption))[1])
-        data = data[:,:pos]
+    if max(data) > max(standard_curve.absorption):
+        if allow_extrapolation == False:
+            pos = min(where(data > max(standard_curve.absorption))[1])
+            data = data[:,:pos]
         
 
 

@@ -187,7 +187,27 @@ if __name__ == "__main__":
     from pyenzymekinetics.parameterestimator.helper.load_utitlity import *
     from pyenzymekinetics.calibrator.standardcurve import StandardCurve
     from pyenzymekinetics.calibrator.utility import to_concentration
+    import numpy as np
 
+    cal_conc = np.fromfile("/Users/maxhaussler/master_thesis/code/PyEnzymeKinetics/data/calibration_conc")
+    cal_abso = np.fromfile("/Users/maxhaussler/master_thesis/code/PyEnzymeKinetics/data/calibration_abso")
+    standardcurve = StandardCurve(cal_conc, cal_abso, "mM")
+    standardcurve.visualize_fit()
+
+    conc = np.fromfile("/Users/maxhaussler/master_thesis/code/PyEnzymeKinetics/data/concentration")
+    time = np.fromfile("/Users/maxhaussler/master_thesis/code/PyEnzymeKinetics/data/time")
+    init_sub = np.array([1, 2.5, 5, 7.5, 10, 20, 30])
+    conc = np.reshape(conc, (7,21))
+    data = to_concentration(standardcurve, conc)
+    mm = EnzymeKinetics(time=time[:-2], enzyme=0.8, product=data, init_substrate=init_sub)
+    mm.fit_models()
+    for model in mm.models.values():
+        report_fit(model.result)
+
+
+
+    print("hi")
+"""
     # Calibrate
     standardcurve = StandardCurve(calibration_conc, calibration_abso)
     # standardcurve.visualize_fit()
@@ -195,10 +215,17 @@ if __name__ == "__main__":
     # Convert concentration in absorbance data
     conc = to_concentration(standardcurve, absorbance_measured)
 
+    product_chantal = product_chantal.reshape((7,42))
+
+    print(f"time: {time[:-2].shape} : {time_chantal.shape}")
+    print(f"product: {conc.shape} : {product_chantal.shape}")
+    print(f"init: {init_substrate.shape} : {init_sub_chantal.shape}")
+
     kinetics = EnzymeKinetics(
-        time, enzyme=0.8, product=conc, init_substrate=init_substrate)
+        time_chantal, enzyme=0.8, product=product_chantal, init_substrate=init_sub_chantal)
     kinetics.fit_models()
     for model in kinetics.models.values():
         report_fit(model.result)
 
     print("hi")
+"""
