@@ -20,18 +20,21 @@ Allows comprehensive data analysis from experimental raw data to kinetic paramet
 
 - standard stuff
 
-### Installing
-
-- How/where to download your program
-- Any modifications needed to be made to files/folders
-
-### Executing program
-
-- How to run the program
-- Step-by-step bullets
+### Installation
 
 ```
-import this
+pip install PyEnzymeKinetics
+```
+
+### Demo
+By providing a list of concetrations and the respective measured absorptions, the data is fitted against multiple equation by running:
+```
+from pyenzymekinetics import CalibrationModel
+calibration = CalibrationModel(concentration_array, absorption_array)
+```
+The resulting standard curve model can be visualiuzed by calling:
+```
+calibration.visualize()
 ```
 
 ## Help
